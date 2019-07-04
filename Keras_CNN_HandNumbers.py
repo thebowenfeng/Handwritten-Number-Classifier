@@ -1,3 +1,4 @@
+#Importing libraris
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -12,15 +13,18 @@ from PIL import ImageTk, Image, ImageDraw
 import PIL
 from tkinter import *
 
+#Used for analyzing and optimizing the CNN.
 dense_layers = [1]
 layer_sizes = [128]
 conv_layers = [2]
 
+#Setting out basic variabls
 data_dir = "trainingSet"
 categories = ['zero','one','two','three','four','five','six','seven','eight','nine']
 size = 28
 training_data = []
 
+#Function that processes the image files and turns them into arrays
 def create_training_data():
     for category in categories:
         path = os.path.join(data_dir, category)
@@ -39,6 +43,7 @@ def create_training_data():
 create_training_data()
 random.shuffle(training_data)
 
+#Function that processes test data.
 def prepare(filepath):
     size = 28
     img_array = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
@@ -48,15 +53,18 @@ def prepare(filepath):
 X = []
 y = []
 
+#Add the training data to X Array and y array
 for features, label in training_data:
     X.append(features)
     y.append(label)
 X = np.array(X).reshape(-1, size, size, 1)
 X = X/255.0
 
+#Main CNN. The for loops are there to iterate through different possible NN structures, in order to find the most efficient one.
 for dense_layer in dense_layers:
     for layer_size in layer_sizes:
         for conv_layer in conv_layers:
+            #Tensorboard logs, to analyze the neural network.
             name = "{}-conv-{}-nodes-{}-dense-{}".format(conv_layer, layer_size, dense_layer, int(time.time()))
             tensorboard = TensorBoard(log_dir='logs/{}'.format(name))
             print(name)
@@ -82,13 +90,14 @@ for dense_layer in dense_layers:
             model.compile(loss="sparse_categorical_crossentropy", optimizer="adam", metrics=['accuracy'])
             model.fit(X, y, batch_size=32, epochs=3, validation_split=0.1, callbacks=[tensorboard])
 
+#Tkinter save function, and model prediction. 
 def save():
     filename = "image.jpg"
     image1.save(filename)
     root.destroy()
     prediction = model.predict([prepare("image.jpg")])
     print(categories[np.argmax(prediction[0])])
-
+#Tkinter paint function
 def paint(event):
     # python_green = "#476042"
     x1, y1 = (event.x - 3), (event.y - 3)
@@ -96,7 +105,7 @@ def paint(event):
     for i in range(0,4):
         cv.create_rectangle(x1, y1, x2, y2, fill="white")
         draw.line([x1, y1, x2, y2], fill="white", width=5)
-
+#Tkinter loop
 while True:
     width = 200
     height = 200
